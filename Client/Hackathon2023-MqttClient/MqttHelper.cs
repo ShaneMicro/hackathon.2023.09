@@ -8,9 +8,9 @@ namespace Hackathon2023_MqttClient
     public class MqttHelper
     {
         private HiveMQClientOptions options;
-        private const String MQTT_TOPIC = "hivemqdemo/commands";
+        private readonly string MQTT_TOPIC;
 
-        public MqttHelper(String hostname, ushort port, String username, String password)
+        public MqttHelper(string hostname, ushort port, string username, string password, string topic)
         {
             options = new HiveMQClientOptions
             {
@@ -20,6 +20,7 @@ namespace Hackathon2023_MqttClient
                 UserName = username,
                 Password = password,
             };
+            MQTT_TOPIC = topic;
         }
 
         public async Task Run()
@@ -29,7 +30,7 @@ namespace Hackathon2023_MqttClient
             Console.WriteLine($"Connecting to {options.Host} on port {options.Port} ...");
 
             // Connect
-            HiveMQtt.Client.Results.ConnectResult connectResult;
+            ConnectResult connectResult;
             try
             {
                 connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -55,7 +56,11 @@ namespace Hackathon2023_MqttClient
                 string received_message = args.PublishMessage.PayloadAsString;
                 Console.WriteLine($"--> Command received: {received_message}");
 
-                KeyboardHelper.Run(received_message);
+                String[] commands = received_message.Split(',');
+                foreach (var command in commands)
+                {
+                    KeyboardHelper.Run(command);
+                }
             };
 
             Console.WriteLine($"Subscribing to topic {MQTT_TOPIC}...");

@@ -1,6 +1,6 @@
-﻿using System.ComponentModel;
-using System.Linq.Expressions;
+﻿using Hackathon2023_MqttClient;
 using System.Runtime.InteropServices;
+using static Hackathon2023_MqttClient.KeyboardDatatypes;
 
 class KeyboardHelper
 {
@@ -10,7 +10,6 @@ class KeyboardHelper
     [DllImport("user32.dll")]
     private static extern IntPtr GetMessageExtraInfo();
 
-
     public static void Run(string command)
     {
         INPUT[] inputs = { };
@@ -18,13 +17,18 @@ class KeyboardHelper
         switch (command)
         {
             case "miconoff":
-                inputs = KeyboardHelper.getTeamsMuteUnmuteMic();
+                inputs = CreateInputs(new KEYBOARD_KEY[] { KEYBOARD_KEY.CTRL, KEYBOARD_KEY.SHIFT, KEYBOARD_KEY.M });
                 break;
-            case "keyboardonoff":
-                inputs = KeyboardHelper.getTeamsOpenCloseCamera();
+            case "camonoff":
+                inputs = CreateInputs(new KEYBOARD_KEY[] { KEYBOARD_KEY.CTRL, KEYBOARD_KEY.SHIFT, KEYBOARD_KEY.O });
+                break;
+            case "leavecall":
+                inputs = CreateInputs(new KEYBOARD_KEY[] { KEYBOARD_KEY.CTRL, KEYBOARD_KEY.SHIFT, KEYBOARD_KEY.H });
+                break;
+            case "raisehand":
+                inputs = CreateInputs(new KEYBOARD_KEY[] { KEYBOARD_KEY.CTRL, KEYBOARD_KEY.SHIFT, KEYBOARD_KEY.K });
                 break;
             default:
-                // code block
                 break;
         }
 
@@ -32,278 +36,55 @@ class KeyboardHelper
         uint result = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
     }
 
-    [Flags]
-    public enum KeyboardDwflags
+   
+
+    private static INPUT[] CreateInputs(KEYBOARD_KEY[] keys)
     {
-        KeyDown = 0x0000,
-        ExtendedKey = 0x0001,
-        KeyUp = 0x0002,
-        Unicode = 0x0004,
-        Scancode = 0x0008
-    }
+        INPUT[] inputs = new INPUT[keys.Length * 2]; //considering commands to press the button down and up
+        ushort inputsIndex = 0;
 
-    public static INPUT[] getTeamsOpenCloseCamera()
-    {
-        INPUT[] inputs = new INPUT[6];
-
-        INPUT inputCTRL = new INPUT();
-        inputCTRL = new INPUT
+        //Populating KEY DOWN commands
+        for (int i = 0; i < keys.Length; i++)
         {
-            type = 1,
-            union = new InputUnion
+            INPUT input = new INPUT();
+            input = new INPUT
             {
-                ki = new KEYBDINPUT
+                type = 1,
+                union = new InputUnion
                 {
-                    //dwFlags = (uint)(KeyEventF.KeyDown | KeyEventF.Scancode),
-                    wVk = 0x11, //CTRL
+                    ki = new KEYBDINPUT
+                    {
+                        dwFlags = (uint)(KeyEventF.KeyDown),
+                        wVk = (ushort)keys[i]
+                    }
                 }
-            }
-        };
+            };
+            inputs[inputsIndex] = input;
+            inputsIndex++;
+        }
 
-        INPUT inputSHIFT = new INPUT();
-        inputSHIFT = new INPUT
+        // Populating KEY UP commands (in reverse order they were pressed)
+        for (int i = keys.Length - 1; i >= 0; i--)
         {
-            type = 1,
-            union = new InputUnion
+            INPUT input = new INPUT();
+            input = new INPUT
             {
-                ki = new KEYBDINPUT
+                type = 1,
+                union = new InputUnion
                 {
-                    //dwFlags = (uint)(KeyEventF.KeyDown | KeyEventF.Scancode),
-                    wVk = 0x10, //SHIFT
+                    ki = new KEYBDINPUT
+                    {
+                        dwFlags = (uint)(KeyEventF.KeyUp),
+                        wVk = (ushort)keys[i]
+                    }
                 }
-            }
-        };
-
-
-        INPUT inputM = new INPUT();
-        inputM = new INPUT
-        {
-            type = 1,
-            union = new InputUnion
-            {
-                ki = new KEYBDINPUT
-                {
-                    //dwFlags = (uint)(KeyEventF.KeyDown | KeyEventF.Scancode),
-                    dwFlags = (uint)(KeyEventF.KeyDown),
-                    wVk = (ushort)'O',
-                    //wVk = 0x68,
-                }
-            }
-        };
-
-        INPUT inputMKeyUp = new INPUT();
-        inputMKeyUp = new INPUT
-        {
-            type = 1,
-            union = new InputUnion
-            {
-                ki = new KEYBDINPUT
-                {
-                    //wVk = (ushort)Char.ConvertToUtf32("D", 0),
-                    wVk = (ushort)'O',
-                    //dwFlags = (uint)(KeyEventF.KeyUp | KeyEventF.Scancode),
-                    dwFlags = (uint)KeyEventF.KeyUp,
-                }
-            }
-        };
-
-        INPUT inputSHIFTKeyUp = new INPUT();
-        inputSHIFTKeyUp = new INPUT
-        {
-            type = 1,
-            union = new InputUnion
-            {
-                ki = new KEYBDINPUT
-                {
-                    wVk = 0x10,
-                    //dwFlags = (uint)(KeyEventF.KeyUp | KeyEventF.Scancode),
-                    dwFlags = (uint)KeyEventF.KeyUp,
-                }
-            }
-        };
-
-        INPUT inputCTRLKeyUp = new INPUT();
-        inputCTRLKeyUp = new INPUT
-        {
-            type = 1,
-            union = new InputUnion
-            {
-                ki = new KEYBDINPUT
-                {
-                    wVk = 0x11,
-                    //dwFlags = (uint)(KeyEventF.KeyUp | KeyEventF.Scancode),
-                    dwFlags = (uint)KeyEventF.KeyUp,
-                }
-            }
-        };
-
-        inputs[0] = inputCTRL;
-        inputs[1] = inputSHIFT;
-        inputs[2] = inputM;
-        inputs[3] = inputMKeyUp;
-        inputs[4] = inputSHIFTKeyUp;
-        inputs[5] = inputCTRLKeyUp;
+            };
+            inputs[inputsIndex] = input;
+            inputsIndex++;
+        }
 
         return inputs;
     }
 
-
-
-    public static INPUT[] getTeamsMuteUnmuteMic()
-    {
-        INPUT[] inputs = new INPUT[6];
-
-        INPUT inputCTRL = new INPUT();
-        inputCTRL = new INPUT
-        {
-            type = 1,
-            union = new InputUnion
-            {
-                ki = new KEYBDINPUT
-                {
-                    //dwFlags = (uint)(KeyEventF.KeyDown | KeyEventF.Scancode),
-                    wVk = 0x11,
-                }
-            }
-        };
-
-        INPUT inputSHIFT = new INPUT();
-        inputSHIFT = new INPUT
-        {
-            type = 1,
-            union = new InputUnion
-            {
-                ki = new KEYBDINPUT
-                {
-                    //dwFlags = (uint)(KeyEventF.KeyDown | KeyEventF.Scancode),
-                    wVk = 0x10,
-                }
-            }
-        };
-
-
-        INPUT inputM = new INPUT();
-        inputM = new INPUT
-        {
-            type = 1,
-            union = new InputUnion
-            {
-                ki = new KEYBDINPUT
-                {
-                    //dwFlags = (uint)(KeyEventF.KeyDown | KeyEventF.Scancode),
-                    dwFlags = (uint)(KeyEventF.KeyDown),
-                    wVk = (ushort)'M',
-                    //wVk = 0x68,
-                }
-            }
-        };
-
-        INPUT inputMKeyUp = new INPUT();
-        inputMKeyUp = new INPUT
-        {
-            type = 1,
-            union = new InputUnion
-            {
-                ki = new KEYBDINPUT
-                {
-                    //wVk = (ushort)Char.ConvertToUtf32("D", 0),
-                    wVk = (ushort)'M',
-                    //dwFlags = (uint)(KeyEventF.KeyUp | KeyEventF.Scancode),
-                    dwFlags = (uint)KeyEventF.KeyUp,
-                }
-            }
-        };
-
-        INPUT inputSHIFTKeyUp = new INPUT();
-        inputSHIFTKeyUp = new INPUT
-        {
-            type = 1,
-            union = new InputUnion
-            {
-                ki = new KEYBDINPUT
-                {
-                    wVk = 0x10,
-                    //dwFlags = (uint)(KeyEventF.KeyUp | KeyEventF.Scancode),
-                    dwFlags = (uint)KeyEventF.KeyUp,
-                }
-            }
-        };
-
-        INPUT inputCTRLKeyUp = new INPUT();
-        inputCTRLKeyUp = new INPUT
-        {
-            type = 1,
-            union = new InputUnion
-            {
-                ki = new KEYBDINPUT
-                {
-                    wVk = 0x11,
-                    //dwFlags = (uint)(KeyEventF.KeyUp | KeyEventF.Scancode),
-                    dwFlags = (uint)KeyEventF.KeyUp,
-                }
-            }
-        };
-
-        inputs[0] = inputCTRL;
-        inputs[1] = inputSHIFT;
-        inputs[2] = inputM;
-        inputs[3] = inputMKeyUp;
-        inputs[4] = inputSHIFTKeyUp;
-        inputs[5] = inputCTRLKeyUp;
-
-        return inputs;
-    }
-
-    public struct INPUT
-    {
-        public uint type;
-        public InputUnion union;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    public struct InputUnion
-    {
-        [FieldOffset(0)]
-        public MOUSEINPUT mi;
-        [FieldOffset(0)]
-        public KEYBDINPUT ki;
-        [FieldOffset(0)]
-        public HARDWAREINPUT hi;
-    }
-
-    public struct MOUSEINPUT
-    {
-        public int dx;
-        public int dy;
-        public uint mouseData;
-        public uint dwFlags;
-        public uint time;
-        public IntPtr dwExtraInfo;
-    }
-
-    public struct KEYBDINPUT
-    {
-        public ushort wVk;
-        public ushort wScan;
-        public uint dwFlags;
-        public uint time;
-        public IntPtr dwExtraInfo;
-    }
-
-    public struct HARDWAREINPUT
-    {
-        public uint uMsg;
-        public ushort wParamL;
-        public ushort wParamH;
-    }
-
-    [Flags]
-    public enum KeyEventF
-    {
-        KeyDown = 0x0000,
-        ExtendedKey = 0x0001,
-        KeyUp = 0x0002,
-        Unicode = 0x0004,
-        Scancode = 0x0008
-    }
+   
 }

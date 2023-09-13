@@ -2,11 +2,17 @@
 {
     internal class Program
     {
+        private const string MQTT_SERVER_ADDRESS = "PUT_YOUR_SERVER_ADDRESS_HERE"; //e.g., a36fd4c.myserver.com
+        private const ushort MQTT_SERVER_PORT = 8883;
+        private const string MQTT_SERVER_USERNAME = "PUT YOUR USERNAME";
+        private const string MQTT_SERVER_PASSWORD = "PUT YOUR PASSWORD";
+        private const string MQTT_TOPIC = "hivemqdemo/commands";
+
         public static void Main()
         {
             Console.WriteLine("Client is running...");
 
-            MqttHelper MqttService = new MqttHelper("the_url", 8883, "username", "password");
+            MqttHelper MqttService = new MqttHelper(MQTT_SERVER_ADDRESS, MQTT_SERVER_PORT, MQTT_SERVER_USERNAME, MQTT_SERVER_PASSWORD, MQTT_TOPIC);
 
             MqttService.Run();
             
