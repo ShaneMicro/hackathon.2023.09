@@ -9,12 +9,12 @@ import time
 import sys
 
 
-class gensture:
-    def __init__(self, show, local_cam=False) -> None:
+class gesture:
+    def __init__(self, show, local_cam=False, stream = False) -> None:
         
         monitors = get_monitors()
         
-        self.url = "http://192.168.0.98/capture"
+        self.url ="http://192.168.0.98:81/stream" if stream else "http://192.168.0.98/capture"
         self.wCam = 640
         self.hCam = 480
         self.frameR = 100
@@ -32,6 +32,7 @@ class gensture:
         self.def_delay = 3
         self.show = show
         self.local_cam = local_cam
+        self.stream = stream
         self.mqtt = mm.mqtt_wrapper(
             "***",
             0,
@@ -49,6 +50,11 @@ class gensture:
             self.cap.set(3, self.wCam)
             self.cap.set(4, self.hCam)
             self.def_delay = 10
+
+        if self.stream:
+            self.cap = cv2.VideoCapture(self.url)
+            self.cap.set(3, self.wCam)
+            self.cap.set(4, self.hCam)
 
     def handle_command(self, cmd, doDelay):
         if self.last_cmd != cmd:
@@ -75,92 +81,102 @@ class gensture:
             # success, img = cap.read()
             img = None
 
-            if self.local_cam:
-                success, img = self.cap.read()
+            if self.local_cam or self.stream:
+                try:
+                    succes, img = self.cap.read()
+                except:
+                    time.sleep(100)
+                    continue
             else:
                 img_resp = urllib.request.urlopen(self.url)
                 imgnp = np.array(bytearray(img_resp.read()), dtype=np.uint8)
                 img = cv2.imdecode(imgnp, -1)
 
-            img = self.detector.findHands(img)
-            lmList, bbox = self.detector.findPosition(img)
+        
+            if img is not None:
+                img = self.detector.findHands(img)
+                lmList, bbox = self.detector.findPosition(img)
 
-            # 2. Get the tip of the index and middle fingers
-            if len(lmList) != 0:
-                x1, y1 = lmList[8][1:]
-                x2, y2 = lmList[12][1:]
-                x3, y3 = lmList[16][1:]
-                x4, y4 = lmList[20][1:]
-                # print(x1, y1, x2, y2)
+                # 2. Get the tip of the index and middle fingers
+                if len(lmList) != 0:
+                    x1, y1 = lmList[8][1:]
+                    x2, y2 = lmList[12][1:]
+                    x3, y3 = lmList[16][1:]
+                    x4, y4 = lmList[20][1:]
+                    # print(x1, y1, x2, y2)
 
-                # 3. Check which fingers are up
-                fingers = self.detector.fingersUp()
+                    # 3. Check which fingers are up
+                    fingers = self.detector.fingersUp()
 
-            cv2.rectangle(
-                img,
-                (self.frameR, self.frameR),
-                (self.wCam - self.frameR, self.hCam - self.frameR),
-                (255, 0, 255),
-                2,
-            )
+                #cv2.rectangle(
+                #    img,
+                #    (self.frameR, self.frameR),
+                #    (self.wCam - self.frameR, self.hCam - self.frameR),
+                #    (255, 0, 255),
+                #    2,
+                #)
 
-            if (
-                fingers[1] == 1
-                and fingers[2] == 0
-                and fingers[3] == 0
-                and fingers[4] == 0
-            ):
-                self.draw_circle(img, [(x1, y1)])
-                self.handle_command("miconoff", True)
+                if (
+                    fingers[1] == 1
+                    and fingers[2] == 0
+                    and fingers[3] == 0
+                    and fingers[4] == 0
+                ):
+                    self.draw_circle(img, [(x1, y1)])
+                    self.handle_command("miconoff", True)
 
-            elif (
-                fingers[1] == 1
-                and fingers[2] == 1
-                and fingers[3] == 0
-                and fingers[4] == 0
-            ):
-                self.draw_circle(img, [(x1, y1), (x2, y2)])
-                self.handle_command("camonoff", True)
+                elif (
+                    fingers[1] == 1
+                    and fingers[2] == 1
+                    and fingers[3] == 0
+                    and fingers[4] == 0
+                ):
+                    self.draw_circle(img, [(x1, y1), (x2, y2)])
+                    self.handle_command("camonoff", True)
 
-            elif (
-                fingers[1] == 1
-                and fingers[2] == 1
-                and fingers[3] == 1
-                and fingers[4] == 0
-            ):
-                self.draw_circle(img, [(x1, y1), (x2, y2), (x3, y3)])
-                self.handle_command("miconoff;camonoff", True)
+                elif (
+                    fingers[1] == 1
+                    and fingers[2] == 1
+                    and fingers[3] == 1
+                    and fingers[4] == 0
+                ):
+                    self.draw_circle(img, [(x1, y1), (x2, y2), (x3, y3)])
+                    self.handle_command("miconoff;camonoff", True)
 
-            elif (
-                fingers[1] == 1
-                and fingers[2] == 1
-                and fingers[3] == 1
-                and fingers[4] == 1
-            ):
-                self.draw_circle(img, [(x1, y1), (x2, y2), (x3, y3), (x4, y4)])
-                self.handle_command("hello", True)
-            else:
-                self.handle_command("", False)
+                elif (
+                    fingers[1] == 1
+                    and fingers[2] == 1
+                    and fingers[3] == 1
+                    and fingers[4] == 1
+                ):
+                    self.draw_circle(img, [(x1, y1), (x2, y2), (x3, y3), (x4, y4)])
+                    self.handle_command("hello", True)
+                else:
+                    self.handle_command("", False)
 
-            cTime = time.time()
-            fps = 1 / (cTime - self.pTime)
-            self.pTime = cTime
-            cv2.putText(
-                img, str(int(fps)), (20, 50), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 3
-            )
-            if self.show:
-                cv2.imshow("Image", img)
+                cTime = time.time()
+                fps = 1 / (cTime - self.pTime)
+                self.pTime = cTime
+                cv2.putText(
+                    img, str(int(fps)), (20, 50), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 3
+                )
+                if self.show:
+                    cv2.imshow("Frame", img)
             cv2.waitKey(1)
 
 
 show = False
 local = False
+stream = False
+
 for a in sys.argv:
     if a == "show":
         show = True
     elif a == "local":
         local = True
+    elif a == "stream":
+        stream = True
 
-g = gensture(show, local)
+g = gesture(show, local, stream)
 
 g.monitor()
