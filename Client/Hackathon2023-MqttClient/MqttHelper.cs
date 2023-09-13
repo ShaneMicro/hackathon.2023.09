@@ -54,8 +54,9 @@ namespace Hackathon2023_MqttClient
             {
                 string received_message = args.PublishMessage.PayloadAsString;
                 Console.WriteLine($"--> Command received: {received_message}");
-
-                KeyboardHelper.Run(received_message);
+                foreach(string cmd in received_message.Split(';')){
+                    KeyboardHelper.Run(cmd);
+                }
             };
 
             Console.WriteLine($"Subscribing to topic {MQTT_TOPIC}...");
