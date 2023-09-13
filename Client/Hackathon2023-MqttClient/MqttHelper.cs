@@ -56,10 +56,8 @@ namespace Hackathon2023_MqttClient
                 string received_message = args.PublishMessage.PayloadAsString;
                 Console.WriteLine($"--> Command received: {received_message}");
 
-                String[] commands = received_message.Split(',');
-                foreach (var command in commands)
-                {
-                    KeyboardHelper.Run(command);
+                foreach(string cmd in received_message.Split(';')){
+                    KeyboardHelper.Run(cmd);
                 }
             };
 
