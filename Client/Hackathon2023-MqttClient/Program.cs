@@ -6,7 +6,7 @@
         {
             Console.WriteLine("Client is running...");
 
-            MqttHelper MqttService = new MqttHelper("the_url", 8883, "username", "password");
+            MqttHelper MqttService = new MqttHelper("***", 8883, "***", "***");
 
             MqttService.Run();
             

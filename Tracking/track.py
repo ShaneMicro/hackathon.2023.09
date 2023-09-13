@@ -5,12 +5,11 @@ from screeninfo import get_monitors
 import cv2
 import urllib
 import mqtt_wrapper as mm
-import time
 import sys
 
 
 class gesture:
-    def __init__(self, show, local_cam=False, stream = False) -> None:
+    def __init__(self, show, local_cam=False, stream=False) -> None:
         
         monitors = get_monitors()
         
@@ -40,6 +39,7 @@ class gesture:
             "***",
             True,
         )
+		
 
         self.mqtt.publish_multi(
             [{"topic": "hivemqdemo/commands", "payload": "welcome"}]
@@ -85,7 +85,6 @@ class gesture:
                 try:
                     succes, img = self.cap.read()
                 except:
-                    time.sleep(100)
                     continue
             else:
                 img_resp = urllib.request.urlopen(self.url)
@@ -108,13 +107,13 @@ class gesture:
                     # 3. Check which fingers are up
                     fingers = self.detector.fingersUp()
 
-                #cv2.rectangle(
+                # cv2.rectangle(
                 #    img,
                 #    (self.frameR, self.frameR),
                 #    (self.wCam - self.frameR, self.hCam - self.frameR),
                 #    (255, 0, 255),
                 #    2,
-                #)
+                # )
 
                 if (
                     fingers[1] == 1
@@ -136,9 +135,9 @@ class gesture:
 
                 elif (
                     fingers[1] == 1
-                    and fingers[2] == 1
-                    and fingers[3] == 1
-                    and fingers[4] == 0
+                    and fingers[2] == 0
+                    and fingers[3] == 0
+                    and fingers[4] == 1
                 ):
                     self.draw_circle(img, [(x1, y1), (x2, y2), (x3, y3)])
                     self.handle_command("miconoff;camonoff", True)

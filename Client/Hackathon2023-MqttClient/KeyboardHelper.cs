@@ -20,7 +20,7 @@ class KeyboardHelper
             case "miconoff":
                 inputs = KeyboardHelper.getTeamsMuteUnmuteMic();
                 break;
-            case "keyboardonoff":
+            case "camonoff":
                 inputs = KeyboardHelper.getTeamsOpenCloseCamera();
                 break;
             default:
