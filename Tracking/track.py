@@ -1,7 +1,7 @@
 import numpy as np
 import track_hand as htm
 import time
-import autopy
+from screeninfo import get_monitors
 import cv2
 import urllib
 import mqtt_wrapper as mm
@@ -11,6 +11,9 @@ import sys
 
 class gensture:
     def __init__(self, show, local_cam=False) -> None:
+        
+        monitors = get_monitors()
+        
         self.url = "http://192.168.0.98/capture"
         self.wCam = 640
         self.hCam = 480
@@ -22,7 +25,8 @@ class gensture:
         self.clocX = 0
         self.clocY = 0
         self.detector = htm.handDetector(maxHands=1)
-        self.wScr, self.hScr = autopy.screen.size()
+        self.wScr = monitors[0].width
+        self.hScr = monitors[0].height
         self.last_cmd = ""
         self.cmd_delay = 0
         self.def_delay = 3
