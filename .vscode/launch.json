@@ -10,7 +10,10 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["show","stream"],
+            "args": [
+                "show",
+                "stream"
+            ],
             "justMyCode": true
         },
         {
@@ -19,7 +22,9 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["show"],
+            "args": [
+                "show"
+            ],
             "justMyCode": true
         },
         {
@@ -28,7 +33,23 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["show","local"],
+            "args": [
+                "show",
+                "local"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Current File show local no-mqtt",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "show",
+                "local",
+                "no_mqtt"
+            ],
             "justMyCode": true
         },
         {

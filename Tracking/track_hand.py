@@ -9,6 +9,9 @@ class handDetector:
     def __init__(
         self, mode=False, maxHands=1, modelComplexity=1, detectionCon=0.5, trackCon=0.5
     ):
+        self.HAND_LEFT = "left"
+        self.HAND_RIGHT = "right"
+
         self.mode = mode
         self.maxHands = maxHands
         self.modelComplex = modelComplexity
@@ -54,6 +57,16 @@ class handDetector:
                 yList.append(cy)
                 # print(id, cx, cy)
                 self.lmList.append([id, cx, cy])
+                # cv2.putText(
+                #    img,
+                #    str(id),
+                #    (cx, cy),
+                #    cv2.FONT_HERSHEY_COMPLEX_SMALL,
+                #    1,
+                #    (255, 0, 0),
+                #    3,
+                # )
+
                 if draw:
                     cv2.circle(img, (cx, cy), 5, (255, 0, 255), cv2.FILLED)
 
@@ -69,12 +82,29 @@ class handDetector:
         return self.lmList, bbox
 
     def fingersUp(self):
+        if len(self.lmList) == 0:
+            return []
+
         fingers = []
         # Thumb
         # print(self.lmList)
         # print(self.tipIds)
 
-        if self.lmList[self.tipIds[0]][1] > self.lmList[self.tipIds[0] - 1][1]:
+        hand_raise = (
+            self.HAND_LEFT
+            if self.lmList[self.tipIds[0]][1] < self.lmList[self.tipIds[-1]][1]
+            else self.HAND_RIGHT
+        )
+
+        if (
+            self.lmList[self.tipIds[0]][1] > self.lmList[self.tipIds[0] - 1][1]
+            and hand_raise == self.HAND_RIGHT
+        ):
+            fingers.append(1)
+        elif (
+            self.lmList[self.tipIds[0]][1] < self.lmList[self.tipIds[0] - 1][1]
+            and hand_raise == self.HAND_LEFT
+        ):
             fingers.append(1)
         else:
             fingers.append(0)
@@ -88,7 +118,7 @@ class handDetector:
 
         # totalFingers = fingers.count(1)
 
-        return fingers
+        return fingers, hand_raise
 
     def findDistance(self, p1, p2, img, draw=True, r=15, t=3):
         x1, y1 = self.lmList[p1][1:]
